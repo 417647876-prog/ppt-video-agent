@@ -32,3 +32,5 @@
 - 已补充 `tests/test_ppt_parser.py` 和 `tests/test_llm_client.py`，当前 `pytest -v` 共 9 个测试通过。
 - 已完成 Task 5：Streamlit 页面入口、PPT 上传、讲稿生成预览和 JSON 下载。
 - 已执行 `python -m compileall app` 和 `pytest -v`，均通过。
+- 已新增 edge-tts 语音生成代码：逐页生成 MP3，并打包为 `audio.zip` 下载。
+- 已验证音频打包和 TTS 调度测试通过；真实 edge-tts 外部服务在当前环境存在 `NoAudioReceived` 不稳定情况。

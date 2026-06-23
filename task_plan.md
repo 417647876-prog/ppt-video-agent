@@ -53,11 +53,12 @@
 
 ### Phase 4：语音生成
 
-状态：pending
+状态：in_progress
 
 - 定义 TTS 接口
 - 第一版可以先支持本地占位音频或一个具体 TTS 服务
 - 每页输出一个音频文件
+- 当前已接入 edge-tts，并在页面提供 `audio.zip` 下载；真实服务调用仍需稳定性验证
 
 ### Phase 5：PPT 页面导出图片
 

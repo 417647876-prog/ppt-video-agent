@@ -42,3 +42,17 @@
 - Streamlit 适合快速验证 AI 应用交互。
 - LLM 调用应和页面逻辑分离，方便后续换模型或改成 Agent 工具。
 - 测试中不能依赖真实 API Key，要用 fake client 或环境变量隔离。
+
+## 2026-06-23 语音生成功能
+
+### 已完成
+
+- 增加 `edge-tts` 依赖。
+- 增加逐页 MP3 生成模块。
+- 增加音频 ZIP 打包下载模块。
+- 在 Streamlit 页面增加语音选择、生成语音和下载 `audio.zip` 功能。
+
+### 注意事项
+
+- 单元测试不调用真实 TTS 服务，只验证调度和打包逻辑。
+- 当前环境下 edge-tts 真实调用存在 `NoAudioReceived` 不稳定情况。后续如果继续失败，应考虑切换到 Azure Speech、OpenAI TTS 或其他正式 TTS API。
