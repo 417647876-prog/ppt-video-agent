@@ -19,3 +19,4 @@
 - 已确认第一版路线为 PPT 解析、真实 LLM 讲稿生成和页面预览。
 - 已确认 LLM 使用 OpenAI 兼容配置，讲稿风格支持内置选项和自定义补充。
 - 已创建设计文档：`docs/superpowers/specs/2026-06-23-streamlit-script-mvp-design.md`。
+- 已将 Streamlit MVP 设计文档改为中文，方便 GitHub 展示和学习复盘。
