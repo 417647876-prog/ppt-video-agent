@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -24,9 +25,10 @@ class OpenAICompatibleLLMClient:
         cls,
         *,
         load_dotenv_file: bool = True,
+        dotenv_path: str | Path | None = None,
     ) -> "OpenAICompatibleLLMClient":
         if load_dotenv_file:
-            load_dotenv()
+            load_dotenv(dotenv_path=dotenv_path, override=True)
 
         base_url = os.getenv("LLM_BASE_URL", "").strip()
         api_key = os.getenv("LLM_API_KEY", "").strip()
