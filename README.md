@@ -47,3 +47,27 @@
 ## 当前状态
 
 项目处于计划和骨架设计阶段，尚未进入业务代码开发。
+
+## 本地运行
+
+1. 创建虚拟环境并安装依赖：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+2. 复制环境变量模板：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+3. 在 `.env` 中填写你的 LLM 配置。
+
+4. 启动 Streamlit：
+
+```powershell
+streamlit run app/streamlit_app.py
+```
