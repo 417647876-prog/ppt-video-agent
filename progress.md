@@ -15,3 +15,7 @@
 - 已设置本仓库局部 Git 身份：`417647876-prog`。
 - 已添加远程仓库：`https://github.com/417647876-prog/ppt-video-agent.git`。
 - 已完成首次提交并推送到 GitHub `main` 分支。
+- 已确认第一版入口为 Streamlit。
+- 已确认第一版路线为 PPT 解析、真实 LLM 讲稿生成和页面预览。
+- 已确认 LLM 使用 OpenAI 兼容配置，讲稿风格支持内置选项和自定义补充。
+- 已创建设计文档：`docs/superpowers/specs/2026-06-23-streamlit-script-mvp-design.md`。
