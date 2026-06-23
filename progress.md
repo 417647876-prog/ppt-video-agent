@@ -21,3 +21,6 @@
 - 已创建设计文档：`docs/superpowers/specs/2026-06-23-streamlit-script-mvp-design.md`。
 - 已将 Streamlit MVP 设计文档改为中文，方便 GitHub 展示和学习复盘。
 - 已创建 Streamlit 讲稿生成 MVP 实现计划：`docs/superpowers/plans/2026-06-23-streamlit-script-mvp.md`。
+- 已创建功能分支：`feature/streamlit-script-mvp`。
+- 已完成 Task 1：项目依赖、Python 包入口、基础数据模型和 README 运行说明。
+- 已验证依赖安装和 `python -m compileall app tests` 通过。
