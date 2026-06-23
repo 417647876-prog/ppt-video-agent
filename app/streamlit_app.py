@@ -11,7 +11,13 @@ from app.llm_client import OpenAICompatibleLLMClient
 from app.ppt_parser import parse_pptx
 from app.script_generator import STYLE_OPTIONS, generate_scripts
 from app.storage import to_json_bytes
-from app.tts_client import VOICE_OPTIONS, EdgeTTSClient, generate_audio_files
+from app.tts_client import (
+    VOICE_OPTIONS,
+    WINDOWS_VOICE_OPTIONS,
+    EdgeTTSClient,
+    WindowsSapiTTSClient,
+    generate_audio_files,
+)
 
 
 STYLE_LABELS = {
@@ -103,26 +109,35 @@ def main() -> None:
     )
 
     st.subheader("生成语音")
+    voice_engine = st.selectbox(
+        "语音引擎",
+        options=["windows", "edge"],
+        format_func=lambda key: "Windows 本机语音（稳定，WAV）"
+        if key == "windows"
+        else "Edge 在线语音（MP3）",
+    )
+    voice_options = WINDOWS_VOICE_OPTIONS if voice_engine == "windows" else VOICE_OPTIONS
     voice = st.selectbox(
         "中文语音",
-        options=list(VOICE_OPTIONS.keys()),
-        format_func=lambda key: VOICE_OPTIONS[key],
+        options=list(voice_options.keys()),
+        format_func=lambda key: voice_options[key],
     )
 
-    if st.button("生成语音 MP3", type="secondary"):
+    if st.button("生成语音", type="secondary"):
         try:
             audio_dir = Path(tempfile.mkdtemp(prefix="ppt_audio_"))
+            tts_client = WindowsSapiTTSClient() if voice_engine == "windows" else EdgeTTSClient()
             with st.spinner("正在生成每页语音..."):
                 audio_paths = asyncio.run(
                     generate_audio_files(
                         scripts=scripts,
                         voice=voice,
                         output_dir=audio_dir,
-                        tts_client=EdgeTTSClient(),
+                        tts_client=tts_client,
                     )
                 )
             st.session_state["audio_zip"] = build_audio_zip_bytes(audio_paths)
-            st.success(f"已生成 {len(audio_paths)} 个 MP3 文件。")
+            st.success(f"已生成 {len(audio_paths)} 个音频文件。")
         except Exception as exc:
             st.error(str(exc))
 

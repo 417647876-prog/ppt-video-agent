@@ -53,12 +53,13 @@
 
 ### Phase 4：语音生成
 
-状态：in_progress
+状态：complete
 
 - 定义 TTS 接口
 - 第一版可以先支持本地占位音频或一个具体 TTS 服务
 - 每页输出一个音频文件
-- 当前已接入 edge-tts，并在页面提供 `audio.zip` 下载；真实服务调用仍需稳定性验证
+- 当前默认使用 Windows 本机中文语音生成 WAV，并在页面提供 `audio.zip` 下载
+- Edge 在线语音保留为可选 MP3 引擎，但在当前环境存在 `NoAudioReceived` 不稳定情况
 
 ### Phase 5：PPT 页面导出图片
 

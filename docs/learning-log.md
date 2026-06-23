@@ -48,11 +48,12 @@
 ### 已完成
 
 - 增加 `edge-tts` 依赖。
-- 增加逐页 MP3 生成模块。
+- 增加逐页音频生成模块。
 - 增加音频 ZIP 打包下载模块。
 - 在 Streamlit 页面增加语音选择、生成语音和下载 `audio.zip` 功能。
+- 增加 Windows 本机中文语音作为默认稳定方案。
 
 ### 注意事项
 
 - 单元测试不调用真实 TTS 服务，只验证调度和打包逻辑。
-- 当前环境下 edge-tts 真实调用存在 `NoAudioReceived` 不稳定情况。后续如果继续失败，应考虑切换到 Azure Speech、OpenAI TTS 或其他正式 TTS API。
+- 当前环境下 edge-tts 真实调用存在 `NoAudioReceived` 不稳定情况，所以默认使用 Windows 本机语音生成 WAV。后续如果需要更自然的声音，应考虑切换到 Azure Speech、OpenAI TTS 或其他正式 TTS API。

@@ -3,10 +3,12 @@ from pathlib import Path
 import pytest
 
 from app.models import SlideScript
-from app.tts_client import VOICE_OPTIONS, generate_audio_files
+from app.tts_client import VOICE_OPTIONS, WINDOWS_VOICE_OPTIONS, generate_audio_files
 
 
 class FakeTTSClient:
+    file_extension = "wav"
+
     def __init__(self):
         self.calls = []
 
@@ -16,7 +18,7 @@ class FakeTTSClient:
 
 
 @pytest.mark.anyio
-async def test_generate_audio_files_creates_one_mp3_per_script(tmp_path: Path):
+async def test_generate_audio_files_creates_one_audio_file_per_script(tmp_path: Path):
     scripts = [
         SlideScript(
             slide_index=1,
@@ -42,7 +44,7 @@ async def test_generate_audio_files_creates_one_mp3_per_script(tmp_path: Path):
         tts_client=client,
     )
 
-    assert [path.name for path in files] == ["slide_001.mp3", "slide_002.mp3"]
+    assert [path.name for path in files] == ["slide_001.wav", "slide_002.wav"]
     assert files[0].read_bytes().startswith(b"audio:zh-CN-XiaoxiaoNeural")
     assert len(client.calls) == 2
 
@@ -50,3 +52,4 @@ async def test_generate_audio_files_creates_one_mp3_per_script(tmp_path: Path):
 def test_voice_options_include_default_chinese_voices():
     assert VOICE_OPTIONS["zh-CN-XiaoxiaoNeural"] == "晓晓 - 女声"
     assert VOICE_OPTIONS["zh-CN-YunxiNeural"] == "云希 - 男声"
+    assert WINDOWS_VOICE_OPTIONS["Microsoft Huihui Desktop"] == "慧慧 - 女声（Windows 本机）"
