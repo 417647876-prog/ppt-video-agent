@@ -30,3 +30,5 @@
 - 已按 TDD 验证 `tests/test_script_generator.py` 从失败到通过，当前 `pytest -v` 共 6 个测试通过。
 - 已完成 Task 4：PPT 文本解析和 OpenAI 兼容 LLM 客户端。
 - 已补充 `tests/test_ppt_parser.py` 和 `tests/test_llm_client.py`，当前 `pytest -v` 共 9 个测试通过。
+- 已完成 Task 5：Streamlit 页面入口、PPT 上传、讲稿生成预览和 JSON 下载。
+- 已执行 `python -m compileall app` 和 `pytest -v`，均通过。
