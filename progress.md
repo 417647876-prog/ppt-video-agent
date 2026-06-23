@@ -26,3 +26,5 @@
 - 已验证依赖安装和 `python -m compileall app tests` 通过。
 - 已完成 Task 2：JSON 序列化和本地保存工具。
 - 已按 TDD 验证 `tests/test_storage.py` 从失败到通过。
+- 已完成 Task 3：目标字数计算、讲稿提示词构建和逐页讲稿生成逻辑。
+- 已按 TDD 验证 `tests/test_script_generator.py` 从失败到通过，当前 `pytest -v` 共 6 个测试通过。
