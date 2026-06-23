@@ -24,3 +24,5 @@
 - 已创建功能分支：`feature/streamlit-script-mvp`。
 - 已完成 Task 1：项目依赖、Python 包入口、基础数据模型和 README 运行说明。
 - 已验证依赖安装和 `python -m compileall app tests` 通过。
+- 已完成 Task 2：JSON 序列化和本地保存工具。
+- 已按 TDD 验证 `tests/test_storage.py` 从失败到通过。
