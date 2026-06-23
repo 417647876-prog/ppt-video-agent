@@ -20,3 +20,4 @@
 - 已确认 LLM 使用 OpenAI 兼容配置，讲稿风格支持内置选项和自定义补充。
 - 已创建设计文档：`docs/superpowers/specs/2026-06-23-streamlit-script-mvp-design.md`。
 - 已将 Streamlit MVP 设计文档改为中文，方便 GitHub 展示和学习复盘。
+- 已创建 Streamlit 讲稿生成 MVP 实现计划：`docs/superpowers/plans/2026-06-23-streamlit-script-mvp.md`。
