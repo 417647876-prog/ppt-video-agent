@@ -21,7 +21,7 @@ STYLE_OPTIONS: dict[str, str] = {
 def calculate_target_chars(
     total_minutes: int,
     slide_count: int,
-    chars_per_minute: int = 220,
+    chars_per_minute: int = 200,
 ) -> int:
     if total_minutes <= 0:
         raise ValueError("目标总时长必须大于 0 分钟。")
@@ -47,7 +47,7 @@ def build_prompt(
     return f"""你是一名专业中文演讲稿作者。请根据下面 PPT 页面内容，生成这一页的中文演讲稿。
 
 讲稿风格：{style}{custom_line}
-目标长度：约 {target_chars} 个中文字符。
+目标长度：严格 {target_chars} 个中文字符，不得低于 {int(target_chars*0.9)} 字，不得高于 {int(target_chars*1.1)} 字。请确保输出正文的字符数确实在此范围内。
 
 要求：
 1. 不要照读 PPT 原文，要补充解释和自然过渡。

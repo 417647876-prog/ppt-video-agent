@@ -57,3 +57,21 @@
 
 - 单元测试不调用真实 TTS 服务，只验证调度和打包逻辑。
 - 当前环境下 edge-tts 真实调用存在 `NoAudioReceived` 不稳定情况，所以默认使用 Windows 本机语音生成 WAV。后续如果需要更自然的声音，应考虑切换到 Azure Speech、OpenAI TTS 或其他正式 TTS API。
+
+## 2026-06-23 PPT 页面导出图片 (Phase 5)
+
+### 已完成
+
+- 创建 \pp/ppt_exporter.py\：通过 PowerPoint COM 将 PPT 逐页导出为 PNG 图片。
+- 后台运行 \powerpoint.Visible = False\（默认即为隐藏，删除该赋值避免 COM 权限错误）。
+- 导出图片质量优化：尝试注册表设置 \ExportBitmapResolution=192\（对应 1920x1080）。
+- 容错处理：关闭 presentation 和 powerpoint 放在 \inally\ 块中，确保资源释放。
+- 测试：mock win32com 模块验证调度逻辑（注意两层模块的 mock 方法）。
+- Streamlit 集成：页面底部增加"导出页面图片"区域，按钮触发导出后逐页预览。
+
+### 学到的内容
+
+- \win32com.client.Dispatch("PowerPoint.Application")\ 是 Windows 上调用 Office 的标准方式。
+- PowerPoint COM 对象默认隐藏，设置 \Visible = False\ 在某些环境会抛 COM 权限错误，直接去掉即可。
+- 测试中 mock win32com 必须同时设置 \sys.modules["win32com"]\ 和 \sys.modules["win32com.client"]\，且让父 mock 的 \.client\ 属性指向子 mock，否则 import 链路不对。
+- MagicMock 的链式属性调用（\mock_app.Presentations.Open(...)\）容易踩坑：中间属性在连续访问中可能创建不同子 mock。最佳实践是直接替换中间属性为独立 MagicMock 实例。

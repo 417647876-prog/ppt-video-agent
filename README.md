@@ -12,6 +12,12 @@
 4. 导出每页画面
 5. 合成最终 MP4 视频
 
+## 当前版本
+
+当前封版版本：`1.0.0`
+
+1.0 已完成本地最小闭环：上传 PPT、生成讲稿、生成语音、导出页面图片并合成 MP4 视频。版本说明见 [docs/releases/1.0.md](docs/releases/1.0.md)。
+
 ## 第一版范围
 
 第一版优先做本地最小闭环：
@@ -19,9 +25,9 @@
 - 本地读取 `.pptx`
 - 生成 `slides.json`
 - 生成逐页讲稿
-- 预留 TTS 接口
+- 支持 Edge、MiniMax、Windows 本机语音生成
 - 使用 ffmpeg 合成视频
-- 后续再接 LangGraph 做 Agent 编排
+- 使用 LangGraph 做基础 Agent 编排
 
 暂不实现：
 
@@ -46,7 +52,7 @@
 
 ## 当前状态
 
-项目处于计划和骨架设计阶段，尚未进入业务代码开发。
+项目已封版 1.0，本地 Streamlit 版本可运行。
 
 ## 本地运行
 
@@ -70,4 +76,10 @@ Copy-Item .env.example .env
 
 ```powershell
 streamlit run app/streamlit_app.py
+```
+
+5. 浏览器打开：
+
+```text
+http://127.0.0.1:8501
 ```

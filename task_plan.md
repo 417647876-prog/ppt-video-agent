@@ -1,13 +1,13 @@
-# AI PPT 演讲视频生成器开发计划
+﻿# AI PPT 演讲视频生成器开发计划
 
 ## 目标
 
-开发一个最小可用版本：用户选择一个 `.pptx` 文件，系统读取每页内容，生成逐页讲稿，生成或接入语音，最后合成为一个 MP4 演讲视频。
+开发一个最小可用版本：用户选择一个 .pptx 文件，系统读取每页内容，生成逐页讲稿，生成或接入语音，最后合成为一个 MP4 演讲视频。
 
 ## 第一版范围
 
-- 输入：本地 `.pptx` 文件
-- 输出：本地 `final.mp4`
+- 输入：本地 .pptx 文件
+- 输出：本地 inal.mp4
 - 目标用户：正在学习 AI 应用开发、熟悉 C# WinForms、希望用 Python 打通 AI 流程的开发者
 - 第一版不做数字人、不做账号系统、不做云端部署
 
@@ -19,6 +19,7 @@
 - PPT 解析：python-pptx
 - 讲稿生成：LLM API，可先做接口抽象
 - 语音合成：先做 TTS 接口抽象，具体服务可接 OpenAI TTS、Azure、讯飞或火山
+- PPT 导出图片：Windows 本机通过 PowerPoint COM 实现
 - 视频合成：ffmpeg
 - 状态存储：本地文件夹 + JSON，后续再加 SQLite
 
@@ -37,9 +38,9 @@
 
 状态：complete
 
-- 读取 `.pptx`
+- 读取 .pptx
 - 提取每页标题和文本框内容
-- 输出 `slides.json`
+- 输出 slides.json
 - 为 PPT 解析写一个最小测试
 
 ### Phase 3：讲稿生成
@@ -49,7 +50,7 @@
 - 根据页数和目标总时长计算每页目标字数
 - 为每页生成讲稿
 - 第一版可以先用规则生成占位讲稿，后续替换成 LLM
-- 输出 `scripts.json`
+- 输出 scripts.json
 
 ### Phase 4：语音生成
 
@@ -58,28 +59,29 @@
 - 定义 TTS 接口
 - 第一版可以先支持本地占位音频或一个具体 TTS 服务
 - 每页输出一个音频文件
-- 当前默认使用 Windows 本机中文语音生成 WAV，并在页面提供 `audio.zip` 下载
-- Edge 在线语音保留为可选 MP3 引擎，但在当前环境存在 `NoAudioReceived` 不稳定情况
+- 当前默认使用 Windows 本机中文语音生成 WAV，并在页面提供 udio.zip 下载
+- Edge 在线语音保留为可选 MP3 引擎，但在当前环境存在 NoAudioReceived 不稳定情况
 
 ### Phase 5：PPT 页面导出图片
 
-状态：pending
+状态：complete
 
 - 将每页 PPT 导出成图片
-- Windows 本机优先考虑 PowerPoint COM 或 LibreOffice
-- 输出 `slide_001.png`、`slide_002.png`
+- 通过 PowerPoint COM 实现，后台运行不显示窗口
+- 输出 slide_001.png、slide_002.png（PNG 格式，索引与 SlideContent.index 一致）
+- 在 Streamlit 页面中增加"导出页面图片"区域，点击按钮后逐页导出并预览
 
 ### Phase 6：视频合成
 
-状态：pending
+状态：complete
 
 - 使用 ffmpeg 将单页图片和单页音频合成片段
 - 拼接所有片段
-- 输出 `final.mp4`
+- 输出 inal.mp4
 
 ### Phase 7：Agent 化
 
-状态：pending
+状态：complete
 
 - 将每个阶段包装成工具函数
 - 用 LangGraph 定义流程节点
@@ -104,18 +106,20 @@
 
 ## 错误记录
 
-暂无。
+- ppt_exporter 测试中 win32com 的 mock 需要同时设置 sys.modules["win32com"] 和 sys.modules["win32com.client"]，并确保 _mock_win32com.client = _mock_win32com_client，否则 import win32com.client 会走 sys.modules["win32com"] 的 client 属性而非 sys.modules["win32com.client"]，导致 mock 不生效。
 
 ## GitHub 和学习过程记录计划
 
 状态：in_progress
 
 - 将项目代码、规划文件和学习日志一起放入 Git 仓库
-- 使用 `README.md` 说明项目背景、目标、技术栈和当前进度
-- 使用 `docs/learning-log.md` 记录学习过程，方便后续面试复盘
+- 使用 README.md 说明项目背景、目标、技术栈和当前进度
+- 使用 docs/learning-log.md 记录学习过程，方便后续面试复盘
 - 使用小步提交记录成长过程，例如：
-  - `docs: add project plan`
-  - `feat: parse ppt slides`
-  - `feat: generate slide scripts`
-  - `feat: render video with ffmpeg`
-- 暂不上传 `.env`、临时音频、生成视频、PPT 原始素材等大文件或敏感文件
+  - docs: add project plan
+  - eat: parse ppt slides
+  - eat: generate slide scripts
+  - eat: render video with ffmpeg
+- 暂不上传 .env、临时音频、生成视频、PPT 原始素材等大文件或敏感文件
+
+
