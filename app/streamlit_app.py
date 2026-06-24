@@ -77,6 +77,29 @@ def _save_uploaded_file(uploaded_file) -> Path:
         return Path(temp_file.name)
 
 
+def generate_script_preview(
+    pptx_path: Path,
+    total_minutes: int,
+    style_key: str,
+    custom_style: str,
+    llm_client,
+    debug_mode: bool,
+):
+    slides = parse_pptx(pptx_path)
+    if debug_mode:
+        slides = slides[:1]
+        total_minutes = min(int(total_minutes), 3)
+
+    scripts = generate_scripts(
+        slides=slides,
+        total_minutes=int(total_minutes),
+        style_key=style_key,
+        custom_style=custom_style,
+        llm_client=llm_client,
+    )
+    return slides, scripts
+
+
 def main() -> None:
     st.set_page_config(page_title="AI PPT 演讲稿生成器", layout="wide")
     st.title("AI PPT 演讲视频生成器")
@@ -120,25 +143,55 @@ def main() -> None:
         st.info("请先上传一个 .pptx 文件。")
         return
 
-    if st.button("一键生成视频", type="primary", use_container_width=True):
+    preview_col, video_col = st.columns(2)
+    with preview_col:
+        preview_clicked = st.button("先生成演讲稿预览", use_container_width=True)
+    with video_col:
+        video_clicked = st.button("一键生成视频", type="primary", use_container_width=True)
+
+    if preview_clicked:
+        try:
+            pptx_path = _save_uploaded_file(uploaded_file)
+            progress = st.progress(0, text="正在解析 PPT...")
+            progress.progress(20, text="正在解析 PPT...")
+
+            llm_client = OpenAICompatibleLLMClient.from_env()
+            progress.progress(50, text="正在调用 LLM 生成讲稿...")
+            slides, scripts = generate_script_preview(
+                pptx_path=pptx_path,
+                total_minutes=int(total_minutes),
+                style_key=style_key,
+                custom_style=custom_style,
+                llm_client=llm_client,
+                debug_mode=debug_mode,
+            )
+
+            progress.progress(100, text="讲稿生成完成！")
+            st.session_state["slides"] = slides
+            st.session_state["scripts"] = scripts
+            st.session_state["pptx_path"] = str(pptx_path)
+            st.session_state.pop("image_paths", None)
+            st.session_state.pop("final_video_path", None)
+            st.session_state.pop("saved_video_path", None)
+            st.success("讲稿已生成，可以先在下方预览。")
+        except Exception as exc:
+            st.error(str(exc))
+
+    if video_clicked:
         try:
             pptx_path = _save_uploaded_file(uploaded_file)
             progress = st.progress(0, text="正在解析 PPT...")
 
             progress.progress(5, text="正在解析 PPT...")
-            slides = parse_pptx(pptx_path)
-            if debug_mode:
-                slides = slides[:1]
-                total_minutes = min(int(total_minutes), 3)
-
-            progress.progress(15, text="正在调用 LLM 生成讲稿...")
             llm_client = OpenAICompatibleLLMClient.from_env()
-            scripts = generate_scripts(
-                slides=slides,
+            progress.progress(15, text="正在调用 LLM 生成讲稿...")
+            slides, scripts = generate_script_preview(
+                pptx_path=pptx_path,
                 total_minutes=int(total_minutes),
                 style_key=style_key,
                 custom_style=custom_style,
                 llm_client=llm_client,
+                debug_mode=debug_mode,
             )
 
             progress.progress(35, text="正在生成语音...")
