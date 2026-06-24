@@ -50,6 +50,10 @@
 
 学习过程记录在 [docs/learning-log.md](docs/learning-log.md)。
 
+## 给大模型的项目上下文
+
+如果要让新的大模型或 AI 编程助手快速接手项目，请先阅读 [docs/project-context-for-llm.md](docs/project-context-for-llm.md)。这份文档整理了项目目标、核心流程、关键文件、运行方式、环境变量和后续开发注意事项。
+
 ## 当前状态
 
 项目已封版 1.0，本地 Streamlit 版本可运行。
