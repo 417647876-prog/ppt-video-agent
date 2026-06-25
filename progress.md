@@ -53,12 +53,14 @@
 
 ## 2026-06-25 Version 1.2
 
-- 分支：待创建 `version/1.2-progress-visibility`
-- 状态：功能收尾完成，准备封版并推送 GitHub
+- 分支：`version/1.2-progress-visibility`
+- 状态：本地封版提交已完成，GitHub 推送因网络连接超时暂未完成
 - 验证：`pytest -q` 57 passed
 - 完成：任务过程可见化、分阶段错误提示、`audio.zip` 下载、`images.zip` 下载、`pytest.ini` 限定测试目录、`ffprobe` 路径修复
 - 文档：README、project-context、run-guide、roadmap、learning-log、release note 已更新
-- 下一步：创建版本分支并推送 GitHub；随后进入 1.3 输出目录和历史记录
+- 本地提交：`e16b5d2 feat: complete version 1.2 progress visibility`
+- 推送结果：`git push -u origin version/1.2-progress-visibility` 失败，原因是 GitHub HTTPS 连接被重置；`curl -I https://github.com` 也超时
+- 下一步：网络恢复后推送 `version/1.2-progress-visibility` 分支和 `v1.2.0` 标签；随后进入 1.3 输出目录和历史记录
 
 ## 2026-06-25 Download and Output Planning
 
