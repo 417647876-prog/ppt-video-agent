@@ -1,3 +1,15 @@
+> **状态更新 (2026-06-25)：** PPT 生成功能（1.1）已暂停。当前重点回到 1.0 视频生成流水线的质量优化。  
+> PPT 生成相关的代码模块 (`ppt_outline_generator.py`, `ppt_content_generator.py`, `ppt_builder.py`, `ppt_template_analyzer.py`) 仍保留在 `app/` 目录中供后续复用，但 Streamlit 页面入口已屏蔽。
+>
+> 恢复此功能前需要解决的核心问题：
+> 1. LLM 输出的内容质量过低（通用模板，缺乏行业深度）
+> 2. python-pptx 构建的视觉效果不够专业
+>
+> 后续如果重新启动，建议路线：
+> 1. 先改 prompt 提升内容质量（提供行业知识示例）
+> 2. 再用 python-pptx 模板替代手动画形状
+> 3. 最后恢复页面入口
+
 # PPT 生成功能路线图
 
 ## 背景

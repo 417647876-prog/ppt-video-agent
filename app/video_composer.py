@@ -46,6 +46,7 @@ def compose_slide_to_clip(
         "-i", str(image_path.resolve()),
         "-i", str(audio_path.resolve()),
         "-c:v", "libx264",
+        "-crf", "18",
         "-pix_fmt", "yuv420p",
         "-tune", "stillimage",
         "-c:a", "aac",

@@ -34,3 +34,19 @@
 - 已执行 `python -m compileall app` 和 `pytest -v`，均通过。
 - 已新增语音生成代码：默认使用 Windows 本机中文语音生成 WAV，Edge 在线语音作为可选 MP3 引擎，并打包为 `audio.zip` 下载。
 - 已验证音频打包、TTS 调度测试和 Windows 本机语音真实生成通过；Edge 在线语音在当前环境存在 `NoAudioReceived` 不稳定情况。
+
+## 2026-06-25
+
+- 已确认暂不继续做 PPT 生成功能，当前重点回到“已有 PPT -> 演讲稿 -> 语音 -> 视频”的主线优化。
+- 已新增版本计划文档：`docs/roadmap-video-pipeline.md`。
+- 计划后续优先完善：讲稿可编辑、输出目录和历史记录、任务过程可见化、TTS 稳定性、面试展示文档。
+- 已将“每完成一个版本后创建版本分支、推送 GitHub、更新项目文档和学习日志”写入 `docs/roadmap-video-pipeline.md` 和 `docs/learning-log.md`。
+
+## 2026-06-25 Version 1.1
+
+- 分支：ersion/1.1-script-editing
+- 状态：已完成，待推送 GitHub
+- 验证：pytest -q 55 passed
+- 完成：讲稿可编辑、编辑后生成语音和视频、单页重新生成
+- 遗留：未做单页重新生成后自动保存（需手动点击保存所有修改）
+- 文档：README、project-context、roadmap 已更新
