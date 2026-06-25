@@ -9,7 +9,7 @@ class FakeLLMClient:
 
 
 def test_calculate_target_chars_uses_total_minutes_and_slide_count():
-    assert calculate_target_chars(total_minutes=120, slide_count=60) == 400
+    assert calculate_target_chars(total_minutes=120, slide_count=60) == 460
 
 
 def test_calculate_target_chars_never_returns_zero():

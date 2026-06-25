@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import asyncio
 import os
@@ -12,8 +12,8 @@ from app.models import SlideScript
 
 
 VOICE_OPTIONS: dict[str, str] = {
-    "zh-CN-XiaoxiaoNeural": "晓晓 - 女声",
     "zh-CN-YunxiNeural": "云希 - 男声",
+    "zh-CN-XiaoxiaoNeural": "晓晓 - 女声",
 }
 
 WINDOWS_VOICE_OPTIONS: dict[str, str] = {
@@ -36,7 +36,7 @@ class EdgeTTSClient:
         output_path.unlink(missing_ok=True)
 
         last_error = ""
-        for _ in range(3):
+        for attempt in range(3):
             output_path.unlink(missing_ok=True)
             result = await asyncio.to_thread(
                 subprocess.run,
@@ -55,8 +55,16 @@ class EdgeTTSClient:
             last_error = result.stderr.strip()
             if output_path.exists() and output_path.stat().st_size > 0:
                 return
+            if attempt < 2:
+                retry_delay = 3
+                import sys
+                print(f"edge-tts 第 {attempt+1} 次失败，{retry_delay} 秒后重试...", file=sys.stderr)
+                await asyncio.sleep(retry_delay)
 
-        raise RuntimeError(last_error or "edge-tts 未生成有效音频文件。")
+        raise RuntimeError(
+            f"Edge 在线语音不稳定，连续 3 次失败。建议切换到「Windows 本机语音」。"
+            f"\n\n错误详情：{last_error or '未生成有效音频'}"
+        )
 
 
 class WindowsSapiTTSClient:
@@ -86,7 +94,7 @@ async def generate_audio_files(
 ) -> list[Path]:
     if not scripts:
         raise ValueError("没有可生成语音的讲稿。")
-    if voice not in VOICE_OPTIONS and voice not in WINDOWS_VOICE_OPTIONS and voice not in AZURE_VOICE_OPTIONS and voice not in MINIMAX_VOICE_OPTIONS and voice not in VOLC_ENGINE_VOICE_OPTIONS:
+    if voice not in VOICE_OPTIONS and voice not in WINDOWS_VOICE_OPTIONS and voice not in AZURE_VOICE_OPTIONS and voice not in MINIMAX_VOICE_OPTIONS and voice not in VOLC_ENGINE_VOICE_OPTIONS and voice not in KOKORO_VOICE_OPTIONS:
         raise ValueError(f"未知语音：{voice}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -119,11 +127,13 @@ def _build_windows_sapi_command(text: str, voice: str, output_path: Path) -> str
 
 
 AZURE_VOICE_OPTIONS: dict[str, str] = {
-    "zh-CN-XiaoxiaoNeural": "晓晓 - 女声",
     "zh-CN-YunxiNeural": "云希 - 男声",
     "zh-CN-YunjianNeural": "云健 - 男声",
-    "zh-CN-XiaoyiNeural": "晓伊 - 女声",
     "zh-CN-YunyangNeural": "云扬 - 男声",
+    "zh-CN-YunyeNeural": "云野 - 男声",
+    "zh-CN-YunzeNeural": "云泽 - 男声",
+    "zh-CN-XiaoxiaoNeural": "晓晓 - 女声",
+    "zh-CN-XiaoyiNeural": "晓伊 - 女声",
     "zh-CN-XiaochenNeural": "晓辰 - 女声",
     "zh-CN-XiaohanNeural": "晓涵 - 女声",
     "zh-CN-XiaomengNeural": "晓梦 - 女声",
@@ -133,10 +143,6 @@ AZURE_VOICE_OPTIONS: dict[str, str] = {
     "zh-CN-XiaoshuangNeural": "晓双 - 女声",
     "zh-CN-XiaoyanNeural": "晓颜 - 女声",
     "zh-CN-XiaoyouNeural": "晓悠 - 女声",
-    "zh-CN-YunxiNeural": "云希 - 男声",
-    "zh-CN-YunyangNeural": "云扬 - 男声",
-    "zh-CN-YunyeNeural": "云野 - 男声",
-    "zh-CN-YunzeNeural": "云泽 - 男声",
 }
 
 
@@ -212,14 +218,21 @@ MINIMAX_VOICE_OPTIONS: dict[str, str] = {
 VOLC_ENGINE_VOICE_OPTIONS: dict[str, str] = {
     # 以下音色来自火山引擎方舟音色库（seed-tts-2.0 模型）
     # 实际可用音色以控制台 > 音色库 为准，可在 .env 中通过 VOLC_SPEAKER 覆盖
+    "zh_male_zhiming": "志明 - 稳重男声",
+    "zh_male_xiaoyong": "晓勇 - 阳光男声",
+    "zh_male_xiaogang": "晓刚 - 成熟男声",
     "zh_female_zhijia": "知家 - 亲切女声",
     "zh_female_mengmeng": "萌萌 - 可爱女声",
     "zh_female_xiaowan": "晓婉 - 温柔女声",
     "zh_female_xiaomei": "晓梅 - 知性女声",
-    "zh_male_zhiming": "志明 - 稳重男声",
-    "zh_male_xiaoyong": "晓勇 - 阳光男声",
-    "zh_male_xiaogang": "晓刚 - 成熟男声",
 }
+
+KOKORO_VOICE_OPTIONS: dict[str, str] = {
+    "zm_yunjian": "云健 - 男声（沉稳）",
+    "zm_yunyang": "云扬 - 男声（阳光）",
+    "zf_xiaobei": "小北 - 女声（自然）",
+}
+
 
 class MiniMaxTTSClient:
     """MiniMax TTS 语音合成客户端（T2A V2 API）。

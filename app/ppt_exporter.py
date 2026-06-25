@@ -10,13 +10,28 @@ def _ensure_resolution_setting() -> None:
     import winreg
 
     try:
+        # Office 2019/365 路径 (16.0)
+        for ver in ["16.0", "15.0"]:
+            try:
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    rf"Software\Microsoft\Office\{ver}\PowerPoint\Options",
+                    0,
+                    winreg.KEY_SET_VALUE,
+                )
+                winreg.SetValueEx(key, "ExportBitmapResolution", 0, winreg.REG_DWORD, 300)
+                winreg.CloseKey(key)
+                return
+            except OSError:
+                continue
+        # 旧版 Office 2007 路径 (12.0)
         key = winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Office\12.0\PowerPoint\Options",
             0,
             winreg.KEY_SET_VALUE,
         )
-        winreg.SetValueEx(key, "ExportBitmapResolution", 0, winreg.REG_DWORD, 192)
+        winreg.SetValueEx(key, "ExportBitmapResolution", 0, winreg.REG_DWORD, 300)
         winreg.CloseKey(key)
     except OSError:
         pass  # 注册表不可写或路径不存在，使用默认分辨率

@@ -1,4 +1,5 @@
-from __future__ import annotations
+﻿from __future__ import annotations
+
 
 import asyncio
 import sys
@@ -13,10 +14,12 @@ import streamlit as st
 
 from app.audio_storage import build_audio_zip_bytes
 from app.llm_client import OpenAICompatibleLLMClient
+from app.ppt_outline_generator import generate_outline_with_reference
+from app.ppt_template_analyzer import analyze_reference_pptx
 from app.ppt_agent import build_agent
 from app.ppt_exporter import export_slides_to_images
 from app.ppt_parser import parse_pptx
-from app.script_generator import STYLE_OPTIONS, generate_scripts
+from app.script_generator import STYLE_OPTIONS, build_prompt, generate_scripts
 from app.storage import to_json_bytes
 from app.tts_client import (
     MINIMAX_VOICE_OPTIONS,
@@ -29,7 +32,7 @@ from app.tts_client import (
     WindowsSapiTTSClient,
     generate_audio_files,
 )
-from app.video_composer import compose_slide_to_clip, concat_clips
+from app.video_composer import _get_ffmpeg_path, compose_slide_to_clip, concat_clips
 
 
 STYLE_LABELS = {
@@ -99,10 +102,11 @@ def generate_script_preview(
     )
     return slides, scripts
 
-
 def main() -> None:
     st.set_page_config(page_title="AI PPT 演讲稿生成器", layout="wide")
     st.title("AI PPT 演讲视频生成器")
+
+    # PPT 生成功能已暂停（代码仍保留在 app/ 目录）
 
     uploaded_file = st.file_uploader("上传 PPT 文件", type=["pptx"])
 
@@ -173,6 +177,7 @@ def main() -> None:
             st.session_state.pop("image_paths", None)
             st.session_state.pop("final_video_path", None)
             st.session_state.pop("saved_video_path", None)
+            st.session_state.pop("scripts_edited", None)
             st.success("讲稿已生成，可以先在下方预览。")
         except Exception as exc:
             st.error(str(exc))
@@ -181,19 +186,25 @@ def main() -> None:
         try:
             pptx_path = _save_uploaded_file(uploaded_file)
             progress = st.progress(0, text="正在解析 PPT...")
-
-            progress.progress(5, text="正在解析 PPT...")
-            llm_client = OpenAICompatibleLLMClient.from_env()
-            progress.progress(15, text="正在调用 LLM 生成讲稿...")
-            slides, scripts = generate_script_preview(
-                pptx_path=pptx_path,
-                total_minutes=int(total_minutes),
-                style_key=style_key,
-                custom_style=custom_style,
-                llm_client=llm_client,
-                debug_mode=debug_mode,
-            )
-
+            if st.session_state.get("scripts") and st.session_state.get("slides"):
+                progress.progress(15, text="使用当前讲稿（跳过 LLM 生成）...")
+                slides = st.session_state["slides"]
+                scripts = st.session_state["scripts"]
+            else:
+                progress.progress(5, text="正在解析 PPT...")
+                llm_client = OpenAICompatibleLLMClient.from_env()
+                progress.progress(15, text="正在调用 LLM 生成讲稿...")
+                slides, scripts = generate_script_preview(
+                    pptx_path=pptx_path,
+                    total_minutes=int(total_minutes),
+                    style_key=style_key,
+                    custom_style=custom_style,
+                    llm_client=llm_client,
+                    debug_mode=debug_mode,
+                )
+            st.session_state["slides"] = slides
+            st.session_state["scripts"] = scripts
+            
             progress.progress(35, text="正在生成语音...")
             audio_dir = Path(tempfile.mkdtemp(prefix="ppt_audio_"))
             tts_client = create_tts_client(tts_engine)
@@ -244,6 +255,20 @@ def main() -> None:
 
             st.success("视频生成完成！" + ("（调试模式-仅前2页）" if debug_mode else ""))
             st.balloons()
+
+            # 显示实际时长对比
+            ffprobe_path = _get_ffmpeg_path().replace("ffmpeg", "ffprobe")
+            dur_result = subprocess.run(
+                [ffprobe_path, "-v", "error", "-show_entries", "format=duration",
+                 "-of", "csv=p=0", str(final_path)],
+                capture_output=True, text=True,
+            )
+            if dur_result.stdout.strip():
+                actual_sec = float(dur_result.stdout.strip())
+                actual_min = round(actual_sec / 60, 1)
+                diff = round(actual_min - int(total_minutes), 1)
+                diff_text = f"（比目标{'多' if diff > 0 else '少'} {abs(diff):.1f} 分钟）" if abs(diff) > 0.5 else "（与目标基本一致）"
+                st.info(f"⏱️ 实际视频时长：{actual_min} 分钟（目标：{int(total_minutes)} 分钟）{diff_text}")
         except Exception as exc:
             st.error(str(exc))
 
@@ -255,26 +280,72 @@ def main() -> None:
     st.subheader("讲稿预览")
     for slide, script in zip(slides, scripts):
         title = slide.title or "无标题"
-        with st.expander(f"第 {slide.index} 页：{title}", expanded=False):
+        edit_badge = " ✏️" if st.session_state.get("scripts_edited") else ""
+        with st.expander(f"第 {slide.index} 页：{title}{edit_badge}", expanded=False):
             left, right = st.columns(2)
             with left:
                 st.markdown("**PPT 原文**")
                 st.text(slide.raw_text)
             with right:
-                st.markdown("**AI 讲稿**")
-                st.write(script.script)
+                st.markdown("**AI 讲稿（点击下方文本框编辑）**")
+                st.text_area(
+                    label=f"编辑第{slide.index}页讲稿",
+                    value=script.script,
+                    height=200,
+                    key=f"script_edit_{slide.index}",
+                    label_visibility="collapsed",
+                )
+                if st.button(f"🔄 重新生成此页", key=f"regenerate_{slide.index}", use_container_width=True):
+                    try:
+                        llm_client = OpenAICompatibleLLMClient.from_env()
+                        prompt = build_prompt(slide, script.target_chars, script.style, custom_style)
+                        result = llm_client.generate(prompt).strip()
+                        if result:
+                            script.script = result
+                            st.session_state["scripts_edited"] = True
+                            st.session_state[f"script_edit_{slide.index}"] = result
+                            st.rerun()
+                    except Exception as exc:
+                        st.error(f"重新生成失败：{exc}")
 
-    col_a, col_b, col_c = st.columns(3)
-    with col_a:
+    save_col, info_col = st.columns([1, 3])
+    with save_col:
+        if st.button("✏️ 保存所有修改", use_container_width=True, type="primary"):
+            modified_count = 0
+            for script in st.session_state["scripts"]:
+                key = f"script_edit_{script.slide_index}"
+                if key in st.session_state:
+                    new_text = st.session_state[key].strip()
+                    if new_text and new_text != script.script:
+                        script.script = new_text
+                        modified_count += 1
+            if modified_count > 0:
+                st.session_state["scripts_edited"] = True
+                st.toast(f"已保存 {modified_count} 页修改！", icon="✅")
+                st.rerun()
+            else:
+                st.toast("没有检测到修改", icon="ℹ️")
+    with info_col:
+        if st.session_state.get("scripts_edited"):
+            st.info("✅ 当前讲稿已使用编辑后的版本，生成视频时将优先使用编辑内容。")
+
+    download_cols = st.columns(3)
+    with download_cols[0]:
         st.download_button(
             "下载 slides.json", data=to_json_bytes(slides),
             file_name="slides.json", mime="application/json",
         )
-    with col_b:
+    with download_cols[1]:
         st.download_button(
-            "下载 scripts.json", data=to_json_bytes(scripts),
+            "下载 scripts.json（原始）", data=to_json_bytes(scripts),
             file_name="scripts.json", mime="application/json",
         )
+    if st.session_state.get("scripts_edited"):
+        with download_cols[2]:
+            st.download_button(
+                "下载 scripts_edited.json（编辑后）", data=to_json_bytes(scripts),
+                file_name="scripts_edited.json", mime="application/json",
+            )
 
     image_paths = st.session_state.get("image_paths", [])
     final_video_path = st.session_state.get("final_video_path")
@@ -290,7 +361,8 @@ def main() -> None:
         with open(final_video_path, "rb") as f:
             video_bytes = f.read()
         st.video(video_bytes)
-        with col_c:
+        video_dl_col, _ = st.columns([1, 3])
+        with video_dl_col:
             st.download_button(
                 "下载 final.mp4", data=video_bytes,
                 file_name="final.mp4", mime="video/mp4",

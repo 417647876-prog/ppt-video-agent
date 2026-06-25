@@ -21,7 +21,7 @@ STYLE_OPTIONS: dict[str, str] = {
 def calculate_target_chars(
     total_minutes: int,
     slide_count: int,
-    chars_per_minute: int = 200,
+    chars_per_minute: int = 230,
 ) -> int:
     if total_minutes <= 0:
         raise ValueError("目标总时长必须大于 0 分钟。")
