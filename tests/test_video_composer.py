@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.video_composer import compose_slide_to_clip, concat_clips
+from app.video_composer import _get_ffprobe_path, compose_slide_to_clip, concat_clips
 
 
 def _make_fake_file(path: Path) -> None:
@@ -58,3 +58,16 @@ def test_concat_clips_runs_ffmpeg(mock_ffmpeg, tmp_path: Path):
     assert output.exists()
     # 验证 concat 文件被清理
     assert not (output.with_suffix(".concat.txt")).exists()
+
+
+def test_get_ffprobe_path_only_replaces_executable_name(tmp_path: Path):
+    ffmpeg_dir = tmp_path / "ffmpeg" / "ffmpeg-7.0-full_build" / "bin"
+    ffmpeg_dir.mkdir(parents=True)
+    ffmpeg_path = ffmpeg_dir / "ffmpeg.exe"
+    ffprobe_path = ffmpeg_dir / "ffprobe.exe"
+    ffmpeg_path.write_text("ffmpeg")
+    ffprobe_path.write_text("ffprobe")
+
+    result = _get_ffprobe_path(str(ffmpeg_path))
+
+    assert result == str(ffprobe_path.resolve())

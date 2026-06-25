@@ -2,6 +2,7 @@
 
 
 import asyncio
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -12,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import streamlit as st
 
-from app.audio_storage import build_audio_zip_bytes
+from app.audio_storage import build_audio_zip_bytes, build_file_zip_bytes
 from app.llm_client import OpenAICompatibleLLMClient
 from app.ppt_outline_generator import generate_outline_with_reference
 from app.ppt_template_analyzer import analyze_reference_pptx
@@ -32,7 +33,7 @@ from app.tts_client import (
     WindowsSapiTTSClient,
     generate_audio_files,
 )
-from app.video_composer import _get_ffmpeg_path, compose_slide_to_clip, concat_clips
+from app.video_composer import _get_ffmpeg_path, _get_ffprobe_path, compose_slide_to_clip, concat_clips
 
 
 STYLE_LABELS = {
@@ -156,10 +157,12 @@ def main() -> None:
     if preview_clicked:
         try:
             pptx_path = _save_uploaded_file(uploaded_file)
+            status = st.status("📄 解析 PPT...", expanded=True)
             progress = st.progress(0, text="正在解析 PPT...")
             progress.progress(20, text="正在解析 PPT...")
 
             llm_client = OpenAICompatibleLLMClient.from_env()
+            status.update(label="🤖 生成讲稿...")
             progress.progress(50, text="正在调用 LLM 生成讲稿...")
             slides, scripts = generate_script_preview(
                 pptx_path=pptx_path,
@@ -171,29 +174,39 @@ def main() -> None:
             )
 
             progress.progress(100, text="讲稿生成完成！")
+            status.update(label="✅ 讲稿生成完成", state="complete", expanded=False)
             st.session_state["slides"] = slides
             st.session_state["scripts"] = scripts
             st.session_state["pptx_path"] = str(pptx_path)
             st.session_state.pop("image_paths", None)
+            st.session_state.pop("audio_paths", None)
             st.session_state.pop("final_video_path", None)
             st.session_state.pop("saved_video_path", None)
             st.session_state.pop("scripts_edited", None)
             st.success("讲稿已生成，可以先在下方预览。")
         except Exception as exc:
-            st.error(str(exc))
+            try:
+                status.update(label="❌ 讲稿生成失败", state="error", expanded=True)
+            except Exception:
+                pass
+            st.error(f"❌ 讲稿生成失败：{exc}")
 
     if video_clicked:
+        current_stage = "视频生成"
         try:
             pptx_path = _save_uploaded_file(uploaded_file)
-            progress = st.progress(0, text="正在解析 PPT...")
+            status = st.status("📄 解析 PPT...", expanded=True)
+            bar = st.progress(0, text="")
+            page_text = st.empty()
+            
+            current_stage = "解析 PPT / 生成讲稿"
             if st.session_state.get("scripts") and st.session_state.get("slides"):
-                progress.progress(15, text="使用当前讲稿（跳过 LLM 生成）...")
                 slides = st.session_state["slides"]
                 scripts = st.session_state["scripts"]
+                status.update(label="✅ 使用已有讲稿（跳过 LLM 生成）", state="complete")
             else:
-                progress.progress(5, text="正在解析 PPT...")
+                bar.progress(10, text="正在解析 PPT...")
                 llm_client = OpenAICompatibleLLMClient.from_env()
-                progress.progress(15, text="正在调用 LLM 生成讲稿...")
                 slides, scripts = generate_script_preview(
                     pptx_path=pptx_path,
                     total_minutes=int(total_minutes),
@@ -202,10 +215,13 @@ def main() -> None:
                     llm_client=llm_client,
                     debug_mode=debug_mode,
                 )
+                status.update(label="✅ 解析 PPT + 生成讲稿完成", state="complete")
             st.session_state["slides"] = slides
             st.session_state["scripts"] = scripts
             
-            progress.progress(35, text="正在生成语音...")
+            current_stage = "生成语音"
+            status.update(label="🔊 生成语音...")
+            bar.progress(35, text="正在生成语音...")
             audio_dir = Path(tempfile.mkdtemp(prefix="ppt_audio_"))
             tts_client = create_tts_client(tts_engine)
             audio_paths = asyncio.run(
@@ -216,12 +232,21 @@ def main() -> None:
                     tts_client=tts_client,
                 )
             )
+            bar.progress(55, text="语音生成完成")
+            status.update(label="✅ 语音生成完成", state="complete")
+            page_text.text("")
 
-            progress.progress(55, text="正在导出 PPT 页面图片...")
+            current_stage = "导出页面图片"
+            status.update(label="🖼️ 导出页面图片...")
+            bar.progress(55, text="正在导出 PPT 页面图片...")
             image_dir = Path(tempfile.mkdtemp(prefix="ppt_images_"))
             image_paths = export_slides_to_images(pptx_path, slides, image_dir)
+            bar.progress(70, text="导出页面图片完成")
+            status.update(label="✅ 导出页面图片完成", state="complete")
 
-            progress.progress(70, text="正在合成视频片段...")
+            current_stage = "合成视频片段"
+            status.update(label="🎬 合成视频片段...")
+            bar.progress(70, text="正在合成视频片段...")
             video_dir = Path(tempfile.mkdtemp(prefix="ppt_video_"))
             clip_paths = []
             for i, (img, audio) in enumerate(zip(image_paths, audio_paths)):
@@ -229,12 +254,19 @@ def main() -> None:
                 compose_slide_to_clip(img, audio, clip)
                 clip_paths.append(clip)
                 pct = 70 + int((i + 1) / len(image_paths) * 25)
-                progress.progress(pct, text=f"已合成第 {i+1}/{len(image_paths)} 页...")
+                bar.progress(pct)
+                page_text.text(f"合成第 {i+1}/{len(image_paths)} 页")
+            bar.progress(96, text="合成完成")
+            status.update(label="✅ 合成视频片段完成", state="complete")
 
-            progress.progress(96, text="正在拼接最终视频...")
+            current_stage = "拼接最终视频"
+            status.update(label="🔗 拼接最终视频...")
+            bar.progress(96, text="正在拼接最终视频...")
             final_path = video_dir / "final.mp4"
             concat_clips(clip_paths, final_path)
+            bar.progress(100, text="完成！")
 
+            current_stage = "保存最终视频"
             # 保存到项目 output 目录
             output_dir = Path("output")
             output_dir.mkdir(exist_ok=True)
@@ -244,11 +276,12 @@ def main() -> None:
             import shutil
             shutil.copy2(str(final_path), str(saved_path))
 
-            progress.progress(100, text="完成！")
+            status.update(label="✅ 视频生成完成！🎉", state="complete", expanded=False)
 
             st.session_state["slides"] = slides
             st.session_state["scripts"] = scripts
             st.session_state["pptx_path"] = str(pptx_path)
+            st.session_state["audio_paths"] = audio_paths
             st.session_state["image_paths"] = image_paths
             st.session_state["final_video_path"] = str(final_path)
             st.session_state["saved_video_path"] = str(saved_path)
@@ -256,8 +289,9 @@ def main() -> None:
             st.success("视频生成完成！" + ("（调试模式-仅前2页）" if debug_mode else ""))
             st.balloons()
 
+            current_stage = "读取视频时长"
             # 显示实际时长对比
-            ffprobe_path = _get_ffmpeg_path().replace("ffmpeg", "ffprobe")
+            ffprobe_path = _get_ffprobe_path(_get_ffmpeg_path())
             dur_result = subprocess.run(
                 [ffprobe_path, "-v", "error", "-show_entries", "format=duration",
                  "-of", "csv=p=0", str(final_path)],
@@ -270,7 +304,12 @@ def main() -> None:
                 diff_text = f"（比目标{'多' if diff > 0 else '少'} {abs(diff):.1f} 分钟）" if abs(diff) > 0.5 else "（与目标基本一致）"
                 st.info(f"⏱️ 实际视频时长：{actual_min} 分钟（目标：{int(total_minutes)} 分钟）{diff_text}")
         except Exception as exc:
-            st.error(str(exc))
+            try:
+                status.update(label="❌ 生成失败", state="error", expanded=True)
+                bar.progress(0, text="")
+            except Exception:
+                pass  # status or bar not created yet
+            st.error(f"❌ {current_stage}失败：{exc}")
 
     slides = st.session_state.get("slides", [])
     scripts = st.session_state.get("scripts", [])
@@ -329,7 +368,7 @@ def main() -> None:
         if st.session_state.get("scripts_edited"):
             st.info("✅ 当前讲稿已使用编辑后的版本，生成视频时将优先使用编辑内容。")
 
-    download_cols = st.columns(3)
+    download_cols = st.columns(5)
     with download_cols[0]:
         st.download_button(
             "下载 slides.json", data=to_json_bytes(slides),
@@ -347,8 +386,27 @@ def main() -> None:
                 file_name="scripts_edited.json", mime="application/json",
             )
 
+    audio_paths = st.session_state.get("audio_paths", [])
+    if audio_paths:
+        with download_cols[3]:
+            st.download_button(
+                "下载 audio.zip",
+                data=build_audio_zip_bytes([Path(p) for p in audio_paths]),
+                file_name="audio.zip",
+                mime="application/zip",
+            )
+
     image_paths = st.session_state.get("image_paths", [])
     final_video_path = st.session_state.get("final_video_path")
+
+    if image_paths:
+        with download_cols[4]:
+            st.download_button(
+                "下载 images.zip",
+                data=build_file_zip_bytes([Path(p) for p in image_paths]),
+                file_name="images.zip",
+                mime="application/zip",
+            )
 
     if image_paths:
         st.subheader("页面图片预览")

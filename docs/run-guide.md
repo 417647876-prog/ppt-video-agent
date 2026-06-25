@@ -27,7 +27,7 @@ curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:8501
 ```powershell
 cd D:\学习\ppt
 pytest -q
-# 预期输出：53 passed
+# 预期输出：57 passed
 ```
 
 ## 安装依赖
@@ -40,11 +40,13 @@ Copy-Item .env.example .env
 
 ## 当前页面功能
 
-- **生成新 PPT**（页面顶部折叠区）：
-  - 从零生成：输入主题/场景/受众/页数/风格 → AI 出大纲+内容 → 生成 `.pptx`
-  - 参考 PPT 生成：上传参考 PPT（提取公司名/配色/字体）→ 输入新主题 → 按参考风格生成
 - **上传 PPT 文件**（原有流程）：
-  - 上传已有 PPT → 生成讲稿 → 生成语音 → 合成视频
+  - 上传已有 PPT → 生成讲稿 → 编辑讲稿 → 生成语音 → 导出图片 → 合成视频
+  - “先生成演讲稿预览”会显示讲稿生成阶段
+  - “一键生成视频”会显示解析、语音、导图、合成、拼接等阶段
+  - 生成结果支持下载 `slides.json`、`scripts.json`、`scripts_edited.json`、`audio.zip`、`images.zip` 和 `final.mp4`
+
+PPT 生成功能当前已暂停，相关代码保留在 `app/` 目录中供后续复用。
 
 ## 已知问题
 

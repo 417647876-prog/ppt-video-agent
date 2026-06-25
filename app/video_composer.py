@@ -28,6 +28,22 @@ def _get_ffmpeg_path() -> str:
     )
 
 
+def _get_ffprobe_path(ffmpeg_path: str | None = None) -> str:
+    """根据 ffmpeg 位置查找同目录下的 ffprobe。"""
+    if ffmpeg_path is None:
+        ffmpeg_path = _get_ffmpeg_path()
+
+    ffmpeg_file = Path(ffmpeg_path)
+    exe_name = "ffprobe.exe" if ffmpeg_file.suffix.lower() == ".exe" else "ffprobe"
+    ffprobe_file = ffmpeg_file.with_name(exe_name)
+    if ffprobe_file.exists():
+        return str(ffprobe_file.resolve())
+
+    raise FileNotFoundError(
+        f"未找到 ffprobe：{ffprobe_file}。请确认 ffprobe 与 ffmpeg 位于同一目录。"
+    )
+
+
 def compose_slide_to_clip(
     image_path: Path,
     audio_path: Path,

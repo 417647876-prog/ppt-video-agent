@@ -44,9 +44,26 @@
 
 ## 2026-06-25 Version 1.1
 
-- 分支：ersion/1.1-script-editing
+- 分支：`version/1.1-script-editing`
 - 状态：已完成，待推送 GitHub
 - 验证：pytest -q 55 passed
 - 完成：讲稿可编辑、编辑后生成语音和视频、单页重新生成
 - 遗留：未做单页重新生成后自动保存（需手动点击保存所有修改）
 - 文档：README、project-context、roadmap 已更新
+
+## 2026-06-25 Version 1.2
+
+- 分支：待创建 `version/1.2-progress-visibility`
+- 状态：功能收尾完成，准备封版并推送 GitHub
+- 验证：`pytest -q` 57 passed
+- 完成：任务过程可见化、分阶段错误提示、`audio.zip` 下载、`images.zip` 下载、`pytest.ini` 限定测试目录、`ffprobe` 路径修复
+- 文档：README、project-context、run-guide、roadmap、learning-log、release note 已更新
+- 下一步：创建版本分支并推送 GitHub；随后进入 1.3 输出目录和历史记录
+
+## 2026-06-25 Download and Output Planning
+
+- 已新增计划文档：`docs/download-and-output-optimization-plan.md`
+- 决策：1.3 将下载区分为“最终结果”和“中间文件下载（调试用）”
+- 决策：Streamlit 下载按钮不能稳定强制弹出 Windows 保存位置选择框，保存位置主要由浏览器设置控制
+- 决策：1.3 主方案改为每次生成创建独立本地任务目录，并提供完整任务包 `task_package.zip`
+- 已将该计划挂到 `docs/roadmap-video-pipeline.md` 的 1.3 章节

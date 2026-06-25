@@ -65,3 +65,17 @@ class OpenAICompatibleLLMClient:
         if content is None or not content.strip():
             raise ValueError("LLM 返回空内容。")
         return content.strip()
+
+    def generate_with_system(self, system_prompt: str, user_prompt: str) -> str:
+        response = self._client.chat.completions.create(
+            model=self.config.model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.7,
+        )
+        content = response.choices[0].message.content
+        if content is None or not content.strip():
+            raise ValueError("LLM 返回空内容。")
+        return content.strip()
